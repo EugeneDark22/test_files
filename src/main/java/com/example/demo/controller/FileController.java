@@ -1,6 +1,8 @@
 package com.example.demo.controller;
 
+import com.example.demo.model.FileEntity;
 import com.example.demo.model.FileInfo;
+import com.example.demo.repository.FileRepository;
 import com.example.demo.service.FileService;
 import com.example.demo.service.FileUploadService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -18,11 +20,19 @@ public class FileController {
     private FileService fileService;
 
     @Autowired
+    private FileRepository fileRepository;
+
+    @Autowired
     private FileUploadService fileUploadService;
 
     @GetMapping
     public List<FileInfo> getFiles() throws IOException {
         return fileService.getFiles();
+    }
+
+    @GetMapping("/all")
+    public List<FileEntity> getAllFiles() {
+        return fileRepository.findAll();
     }
 
     @PostMapping("/upload")
@@ -34,4 +44,5 @@ public class FileController {
             return "Failed to upload file: " + e.getMessage();
         }
     }
+
 }
