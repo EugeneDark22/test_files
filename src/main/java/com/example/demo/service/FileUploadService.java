@@ -11,12 +11,11 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.attribute.BasicFileAttributes;
-import java.text.SimpleDateFormat;
 
 @Service
 public class FileUploadService {
 
-    private static final String DIRECTORY_PATH = "C://Users//korop//OneDrive//Desktop//files";
+    private static final String DIRECTORY_PATH = "C://Users//koropetskiy//Desktop//files";
 
     @Autowired
     private FileRepository fileRepository;
@@ -36,7 +35,7 @@ public class FileUploadService {
         fileEntity.setSize(saveFile.length());
         fileEntity.setExtension(getFileExtension(saveFile));
         fileEntity.setHash(getFileHash(saveFile));
-        fileEntity.setCreationDate(getFileCreationDate(saveFile));
+        fileEntity.setCreationDate(getFileCreationDate(saveFile)); // Возвращает long
 
         fileRepository.save(fileEntity);
     }
@@ -53,9 +52,8 @@ public class FileUploadService {
         }
     }
 
-    private String getFileCreationDate(File file) throws IOException {
+    private long getFileCreationDate(File file) throws IOException {
         BasicFileAttributes attrs = Files.readAttributes(file.toPath(), BasicFileAttributes.class);
-        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
-        return sdf.format(attrs.creationTime().toMillis());
+        return attrs.creationTime().toMillis(); // Возвращаем long
     }
 }

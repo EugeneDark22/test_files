@@ -1,10 +1,7 @@
 package com.example.demo.controller;
 
 import com.example.demo.model.FileEntity;
-import com.example.demo.model.FileInfo;
-import com.example.demo.repository.FileRepository;
 import com.example.demo.service.FileService;
-import com.example.demo.service.FileUploadService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
@@ -19,30 +16,18 @@ public class FileController {
     @Autowired
     private FileService fileService;
 
-    @Autowired
-    private FileRepository fileRepository;
-
-    @Autowired
-    private FileUploadService fileUploadService;
-
     @GetMapping
-    public List<FileInfo> getFiles() throws IOException {
-        return fileService.getFiles();
-    }
-
-    @GetMapping("/all")
     public List<FileEntity> getAllFiles() {
-        return fileRepository.findAll();
+        return fileService.getAllFiles();
     }
 
     @PostMapping("/upload")
-    public String uploadFile(@RequestParam("file") MultipartFile file) {
-        try {
-            fileUploadService.saveFile(file);
-            return "File uploaded successfully!";
-        } catch (IOException e) {
-            return "Failed to upload file: " + e.getMessage();
-        }
+    public void uploadFile(@RequestParam("file") MultipartFile file) throws IOException {
+        fileService.saveFile(file);
     }
 
+    @DeleteMapping("/admin/files/{id}")
+    public void deleteFile(@PathVariable Long id) {
+        fileService.deleteFile(id);
+    }
 }

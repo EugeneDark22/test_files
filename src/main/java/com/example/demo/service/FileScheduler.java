@@ -2,81 +2,65 @@ package com.example.demo.service;
 
 import com.example.demo.model.FileEntity;
 import com.example.demo.repository.FileRepository;
+import org.apache.commons.codec.digest.DigestUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
-import java.io.File;
-import java.io.FileInputStream;
 import java.io.IOException;
 import java.nio.file.Files;
-import java.nio.file.attribute.BasicFileAttributes;
-import java.text.SimpleDateFormat;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.List;
-import java.util.Optional;
 
 @Service
 public class FileScheduler {
 
+    private final String DIRECTORY_PATH = "C://Users//koropetskiy//Desktop//files"; // Укажите путь к директории с файлами
+
     @Autowired
     private FileRepository fileRepository;
 
-    private static final String DIRECTORY_PATH = "C://Users//korop//OneDrive//Desktop//files";
+    @Scheduled(fixedRate = 1800000) // Запуск каждые полчаса
+    public void updateFileDatabase() throws IOException {
+        List<Path> filesInDirectory = Files.list(Paths.get(DIRECTORY_PATH)).toList();
 
-    @Scheduled(fixedRate = 1800000) // Запуск кожні 30 хвилин (1800000 мілісекунд)
-    public void updateFileDatabase() {
-        File directory = new File(DIRECTORY_PATH);
-        File[] files = directory.listFiles();
-
-        if (files != null) {
-            for (File file : files) {
-                try {
-                    updateOrSaveFile(file);
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
-            }
+        for (Path filePath : filesInDirectory) {
+            String fileName = filePath.getFileName().toString();
+            fileRepository.findByName(fileName).ifPresentOrElse(
+                    fileEntity -> updateFile(fileEntity, filePath),
+                    () -> saveNewFile(filePath)
+            );
         }
     }
 
-    private void updateOrSaveFile(File file) throws IOException {
-        List<FileEntity> existingFiles = fileRepository.findByName(file.getName());
+    private void updateFile(FileEntity fileEntity, Path filePath) {
+        try {
+            fileEntity.setSize(Files.size(filePath));
+            fileEntity.setHash(DigestUtils.sha256Hex(Files.newInputStream(filePath)));
+            fileEntity.setCreationDate(Files.getLastModifiedTime(filePath).toMillis());
+            fileRepository.save(fileEntity);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
 
-        if (!existingFiles.isEmpty()) {
-            for (FileEntity fileEntity : existingFiles) {
-                fileEntity.setSize(file.length());
-                fileEntity.setHash(getFileHash(file));
-                fileEntity.setCreationDate(getFileCreationDate(file));
-                fileRepository.save(fileEntity);
-            }
-        } else {
+    private void saveNewFile(Path filePath) {
+        try {
             FileEntity newFile = new FileEntity();
-            newFile.setName(file.getName());
-            newFile.setPath(file.getAbsolutePath());
-            newFile.setSize(file.length());
-            newFile.setExtension(getFileExtension(file));
-            newFile.setHash(getFileHash(file));
-            newFile.setCreationDate(getFileCreationDate(file));
+            newFile.setName(filePath.getFileName().toString());
+            newFile.setSize(Files.size(filePath));
+            newFile.setExtension(getFileExtension(filePath.getFileName().toString()));
+            newFile.setHash(DigestUtils.sha256Hex(Files.newInputStream(filePath)));
+            newFile.setCreationDate(Files.getLastModifiedTime(filePath).toMillis());
             fileRepository.save(newFile);
+        } catch (IOException e) {
+            e.printStackTrace();
         }
     }
 
-
-    private String getFileExtension(File file) {
-        String name = file.getName();
-        int lastIndexOf = name.lastIndexOf(".");
-        return lastIndexOf == -1 ? "" : name.substring(lastIndexOf + 1);
-    }
-
-    private String getFileHash(File file) throws IOException {
-        try (FileInputStream fis = new FileInputStream(file)) {
-            return org.apache.commons.codec.digest.DigestUtils.md5Hex(fis);
-        }
-    }
-
-    private String getFileCreationDate(File file) throws IOException {
-        BasicFileAttributes attrs = Files.readAttributes(file.toPath(), BasicFileAttributes.class);
-        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
-        return sdf.format(attrs.creationTime().toMillis());
+    private String getFileExtension(String fileName) {
+        int dotIndex = fileName.lastIndexOf('.');
+        return (dotIndex == -1) ? "" : fileName.substring(dotIndex + 1);
     }
 }
