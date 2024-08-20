@@ -17,7 +17,7 @@ public class FileEntity {
     private String extension;
     private String hash;
     private long creationDate;
-    private String path;  // Новое поле для хранения пути к файлу
+    private String path;
 
     // Геттеры и сеттеры
 

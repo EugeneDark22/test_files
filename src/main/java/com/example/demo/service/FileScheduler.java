@@ -16,7 +16,7 @@ import java.util.List;
 @Service
 public class FileScheduler {
 
-    private final String DIRECTORY_PATH = "C://Users//koropetskiy//Desktop//files"; // Укажите путь к директории с файлами
+    private static final String DIRECTORY_PATH = "/app/files";
 
     @Autowired
     private FileRepository fileRepository;

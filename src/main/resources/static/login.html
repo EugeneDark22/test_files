@@ -13,28 +13,6 @@
   <button type="submit">Login</button>
 </form>
 
-<script>
-  document.getElementById('loginForm').addEventListener('submit', async (e) => {
-    e.preventDefault();
-    const username = document.getElementById('username').value;
-    const password = document.getElementById('password').value;
-
-    const response = await fetch('/authenticate', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({ username, password })
-    });
-
-    if (response.ok) {
-      const token = await response.text();
-      localStorage.setItem('token', token); // Сохранение токена в LocalStorage
-      window.location.href = '/file-info.html'; // Переход на страницу с файлами после успешного входа
-    } else {
-      alert('Login failed');
-    }
-  });
-</script>
+<script src="login.js"></script>
 </body>
 </html>

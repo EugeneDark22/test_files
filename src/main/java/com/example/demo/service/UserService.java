@@ -2,24 +2,32 @@ package com.example.demo.service;
 
 import com.example.demo.model.UserEntity;
 import com.example.demo.repository.UserRepository;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
+
+import java.util.List;
 
 @Service
 public class UserService {
 
-    @Autowired
-    private UserRepository userRepository;
+    private final UserRepository userRepository;
 
-    @Autowired
-    private PasswordEncoder passwordEncoder;
+    public UserService(UserRepository userRepository) {
+        this.userRepository = userRepository;
+    }
 
-    public void createUser(String username, String password, String role) {
-        UserEntity user = new UserEntity();
-        user.setUsername(username);
-        user.setPassword(passwordEncoder.encode(password)); // Хеширование пароля
-        user.setRole(role);
+    @PreAuthorize("hasRole('ADMIN')")
+    public List<UserEntity> getAllUsers() {
+        return userRepository.findAll();
+    }
+
+    @PreAuthorize("hasRole('ADMIN')")
+    public void createUser(UserEntity user) {
         userRepository.save(user);
+    }
+
+    @PreAuthorize("hasRole('ADMIN')")
+    public void deleteUser(Long id) {
+        userRepository.deleteById(id);
     }
 }

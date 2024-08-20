@@ -15,7 +15,7 @@ import java.nio.file.attribute.BasicFileAttributes;
 @Service
 public class FileUploadService {
 
-    private static final String DIRECTORY_PATH = "C://Users//koropetskiy//Desktop//files";
+    private static final String DIRECTORY_PATH = "/app/files";  // Шлях всередині контейнера
 
     @Autowired
     private FileRepository fileRepository;
@@ -35,7 +35,7 @@ public class FileUploadService {
         fileEntity.setSize(saveFile.length());
         fileEntity.setExtension(getFileExtension(saveFile));
         fileEntity.setHash(getFileHash(saveFile));
-        fileEntity.setCreationDate(getFileCreationDate(saveFile)); // Возвращает long
+        fileEntity.setCreationDate(getFileCreationDate(saveFile));
 
         fileRepository.save(fileEntity);
     }
@@ -54,6 +54,6 @@ public class FileUploadService {
 
     private long getFileCreationDate(File file) throws IOException {
         BasicFileAttributes attrs = Files.readAttributes(file.toPath(), BasicFileAttributes.class);
-        return attrs.creationTime().toMillis(); // Возвращаем long
+        return attrs.creationTime().toMillis();
     }
 }
