@@ -7,6 +7,9 @@ ARG JAR_FILE=target/*.jar
 # Створення директорії для збереження файлів
 RUN mkdir -p /app/files
 
+# Створення директорії для збереження звітів
+RUN mkdir -p /app/reports
+
 # Копіювати JAR файл у контейнер
 COPY ${JAR_FILE} app.jar
 
