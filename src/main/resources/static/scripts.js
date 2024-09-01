@@ -1,7 +1,70 @@
+document.addEventListener("DOMContentLoaded", function () {
+    const uploadForm = document.getElementById("uploadForm");
+    const searchForm = document.getElementById("searchForm");
+    const fileTableBody = document.querySelector("#fileTable tbody");
+
+    // Завантаження файлів при завантаженні сторінки
+    fetchFiles();
+
+    // Обробник завантаження файлу
+    uploadForm.addEventListener("submit", async function (event) {
+        event.preventDefault();
+
+        const fileInput = document.getElementById("fileInput");
+        const formData = new FormData();
+        formData.append("file", fileInput.files[0]);
+
+        const token = localStorage.getItem("token");
+        await fetch("/api/files/upload", {
+            method: "POST",
+            headers: {
+                "Authorization": "Bearer " + token
+            },
+            body: formData
+        });
+
+        fetchFiles();
+    });
+
+    // Обробник пошуку файлів за вмістом
+    searchForm.addEventListener("submit", function (event) {
+        event.preventDefault();
+
+        const keyword = document.getElementById("searchKeyword").value;
+        if (keyword) {
+            fetch(`/api/files/search?keyword=${encodeURIComponent(keyword)}`, {
+                method: 'GET',
+                headers: {
+                    'Authorization': 'Bearer ' + localStorage.getItem('token')
+                }
+            })
+                .then(response => response.json())
+                .then(files => {
+                    fileTableBody.innerHTML = "";
+                    files.forEach(file => {
+                        const row = document.createElement("tr");
+
+                        row.innerHTML = `
+                        <td>${file.name}</td>
+                        <td>${file.size}</td>
+                        <td>${file.extension}</td>
+                        <td>${file.hash}</td>
+                        <td>${new Date(file.creationDate).toLocaleString()}</td>
+                        <td><button onclick="downloadFile('${file.path}')">Download</button></td>
+                        ${isAdmin() ? `<td><button onclick="deleteFile(${file.id})">Delete</button></td>` : ''}
+                    `;
+                        fileTableBody.appendChild(row);
+                    });
+                })
+                .catch(error => console.error("Error fetching files:", error));
+        }
+    });
+});
+
 async function fetchFiles() {
     const token = localStorage.getItem('token');
     if (!token) {
-        window.location.href = '/login.html'; // Перенаправление на страницу входа, если токен отсутствует
+        window.location.href = '/login.html'; // Перенаправлення на сторінку входу, якщо токен відсутній
         return;
     }
 
@@ -29,9 +92,8 @@ async function fetchFiles() {
             <td>${file.extension}</td>
             <td>${file.hash}</td>
             <td>${new Date(file.creationDate).toLocaleString()}</td>
-            <td>
-                ${admin ? `<button onclick="deleteFile(${file.id})">Delete</button>` : ''}
-            </td>
+            <td><button onclick="downloadFile('${file.path}')">Download</button></td>
+            ${admin ? `<td><button onclick="deleteFile(${file.id})">Delete</button></td>` : ''}
         `;
         tableBody.appendChild(row);
     });
@@ -53,28 +115,10 @@ async function isAdmin(token) {
     }
 }
 
-document.getElementById('uploadForm').addEventListener('submit', async (e) => {
-    e.preventDefault();
-    const fileInput = document.getElementById('fileInput');
-    const formData = new FormData();
-    formData.append('file', fileInput.files[0]);
-
-    const token = localStorage.getItem('token');
-    await fetch('/api/files/upload', {
-        method: 'POST',
-        headers: {
-            'Authorization': 'Bearer ' + token
-        },
-        body: formData
-    });
-
-    fetchFiles();
-});
-
 async function deleteFile(fileId) {
     if (confirm('Are you sure you want to delete this file?')) {
         const token = localStorage.getItem('token');
-        await fetch(`/api/admin/files/${fileId}`, {
+        await fetch(`/api/files/${fileId}`, {
             method: 'DELETE',
             headers: {
                 'Authorization': 'Bearer ' + token
@@ -84,4 +128,6 @@ async function deleteFile(fileId) {
     }
 }
 
-window.onload = fetchFiles;
+function downloadFile(filePath) {
+    window.location.href = `/api/files/download?path=${encodeURIComponent(filePath)}`;
+}
